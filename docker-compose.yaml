@@ -1,0 +1,10 @@
+services:
+  drugmed:
+    container_name: "drugmed"
+    image: postgres:17-alpine3.20
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_PASSWORD: asdf
+      POSTGRES_USER: asdf
+      POSTGRES_DB: drug
