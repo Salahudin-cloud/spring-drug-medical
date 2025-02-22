@@ -35,6 +35,10 @@ public class Prescription {
     @Column(nullable = false)
     private String doctorName;
 
+
+    @Enumerated(EnumType.STRING)
+    private ClaimLimit claim;
+
     @Column(nullable = false, name = "prescription_date")
     private LocalDateTime prescriptionDate;
 
@@ -45,5 +49,9 @@ public class Prescription {
     @Column(nullable = false, name = "updated_at")
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    public enum ClaimLimit{
+        ONE_TIMES, TWO_TIMES, THREE_TIMES
+    }
 }
 

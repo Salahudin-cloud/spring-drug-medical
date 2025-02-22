@@ -1,8 +1,10 @@
 package com.example.drugmed.dto.patient;
 
 
+import com.example.drugmed.dto.patient_referral_letter.PatientReferralLetterResponse;
 import com.example.drugmed.dto.prescription.PrescriptionResponse;
 import com.example.drugmed.entity.Patient;
+import com.example.drugmed.entity.PatientReferralLetter;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -22,7 +24,7 @@ public class PatientResponse {
     private Patient.Gender gender;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private List<PrescriptionResponse> prescription;
-
+    private List<PatientReferralLetterResponse> referralLetters;
+    private List<PrescriptionResponse> prescriptions;
 
 }

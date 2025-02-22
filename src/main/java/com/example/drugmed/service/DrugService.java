@@ -21,6 +21,7 @@ import java.text.ParseException;
 import java.util.Currency;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -30,8 +31,6 @@ public class DrugService {
     private final DrugRepository drugRepository;
     private final DrugDetailRepository drugDetailRepository;
 
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public WebResponse<String> createDrug(DrugCreateRequest request) {
         Drug drug = Drug.builder()
@@ -60,10 +59,9 @@ public class DrugService {
     public WebResponse<String> updateDrug(Long id , DrugUpdateRequest request) {
         Drug drug = getDrug(id);
 
-        if (request == null) {
+        if (request == null || (new ObjectMapper().convertValue(request, Map.class)).isEmpty()) {
             throw  new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body tidak boleh kosong");
         }
-
 
         if (request.getDrugName() != null) {
             drug.setDrugName(request.getDrugName());
@@ -78,15 +76,12 @@ public class DrugService {
             drug.setStock(request.getStock());
         }
 
-
         drugRepository.save(drug);
-
 
         return WebResponse.<String>builder()
                 .message("Data obat berhasil di update")
                 .status(HttpStatus.OK.value())
                 .build();
-
     }
 
 
@@ -112,7 +107,7 @@ public class DrugService {
 
 
             List<DrugResponse> drugResponses = drugs.stream().map(drug -> {
-                Number number = null;
+                Number number;
                 try {
                     number = formatter.parse(String.valueOf(drug.getPrice()));
                 } catch (ParseException e) {
@@ -137,8 +132,6 @@ public class DrugService {
                     .status(HttpStatus.OK.value())
                     .data(drugResponses)
                     .build();
-
-
         }
 
 
@@ -151,7 +144,7 @@ public class DrugService {
         Currency currency = Currency.getInstance("IDR");
         formatter.setCurrency(currency);
 
-        Number number = null;
+        Number number;
         try {
             number = formatter.parse(String.valueOf(drug.getPrice()));
         } catch (ParseException e) {
@@ -179,11 +172,7 @@ public class DrugService {
     }
 
 
-
     private DrugDetailResponse mapToDrugDetailResponse(DrugDetail drugDetail) {
-
-
-
         return DrugDetailResponse.builder()
                 .composition(drugDetail.getComposition())
                 .dosage(drugDetail.getDosage())

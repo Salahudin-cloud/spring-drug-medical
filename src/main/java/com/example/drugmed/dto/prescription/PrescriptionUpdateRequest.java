@@ -12,12 +12,11 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-    public class PrescriptionUpdateRequest {
+public class PrescriptionUpdateRequest {
 
-        private Long patientId;
-        private List<PrescriptionDrugUpdateRequest> drugUpdateRequest;
-        private String doctorName;
-        private LocalDateTime prescriptionDate;
+    private List<PrescriptionDrugUpdateRequest> drug;
+    private String doctorName;
+    private LocalDateTime prescriptionDate;
 
 
-    }
+}

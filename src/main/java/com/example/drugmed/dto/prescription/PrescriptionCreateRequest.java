@@ -1,6 +1,7 @@
 package com.example.drugmed.dto.prescription;
 
 
+import com.example.drugmed.entity.Prescription;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -24,6 +25,10 @@ public class PrescriptionCreateRequest {
 
     @NotBlank(message = "Doctor name is required")
     private String doctorName;
+
+
+    @NotNull(message = "claim limit are required")
+    private Prescription.ClaimLimit claim;
 
     @NotNull(message = "Prescription date is required")
     private LocalDateTime prescriptionDate;

@@ -44,7 +44,7 @@ public class DrugController {
             path = "/drug",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public WebResponse<String> update(Long drug_id) {
+    public WebResponse<String> delete(Long drug_id) {
         return drugService.deleteDrug(drug_id);
     }
 

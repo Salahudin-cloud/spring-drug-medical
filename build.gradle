@@ -33,10 +33,21 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+	testImplementation 'com.h2database:h2:2.3.232'
+
+
 
 
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+bootJar {
+	archiveFileName = "drugmed-0.0.1-SNAPSHOT.jar"
+}
+
+jar {
+	enabled = false
 }

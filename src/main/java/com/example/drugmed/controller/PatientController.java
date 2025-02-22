@@ -44,7 +44,7 @@ public class PatientController {
             path = "/patient",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public WebResponse<String> updatePatient(
+    public WebResponse<String> delete(
             @RequestParam Long patient_id){
         return patientService.deletePatient(patient_id);
     }

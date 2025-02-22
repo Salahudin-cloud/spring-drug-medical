@@ -3,6 +3,8 @@ package com.example.drugmed.dto.prescription;
 
 import lombok.*;
 
+import java.util.List;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -12,6 +14,7 @@ public class PrescriptionDrugUpdateRequest {
 
     private Long drugId;
     private Long oldDrugId;
+    private List<Long> drugIds;
     private ActionType action;
 
 

@@ -1,6 +1,18 @@
 services:
+  api-service:
+    container_name: spring-drug-med
+    image: "spring-drug-med:0.0.1"
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_USERNAME: asdf
+      DATABASE_PASSWORD: asdf
+      DATABASE_URL: jdbc:postgresql://drugmed:5432/drug
+    depends_on:
+      - drugmed
+
   drugmed:
-    container_name: "drugmed"
+    container_name: postgres-database
     image: postgres:17-alpine3.20
     ports:
       - "5433:5432"

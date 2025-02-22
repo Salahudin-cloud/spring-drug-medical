@@ -89,8 +89,8 @@ public class ErrorController {
     public ResponseEntity<WebResponse<List<String>>> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
         List<String> errors = new ArrayList<>();
 
-        String fieldName = "";  // Initialize
-        String requiredType = ""; // Initialize
+        String fieldName = "";
+        String requiredType = "";
 
         if (ex.getRequiredType() != null) {
             requiredType = ex.getRequiredType().getSimpleName();

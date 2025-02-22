@@ -49,4 +49,10 @@ public class Drug {
     public enum DrugCategory {
         TABLET, SYRUP, CAPSULE
     }
+
+    public void decreaseDrugStock(){
+        if (this.stock > 0 ) {
+            stock --;
+        }
+    }
 }
