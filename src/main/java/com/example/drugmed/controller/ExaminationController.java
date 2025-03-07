@@ -3,6 +3,7 @@ package com.example.drugmed.controller;
 import com.example.drugmed.dto.WebResponse;
 import com.example.drugmed.dto.examination.ExaminationCreateRequest;
 import com.example.drugmed.dto.examination.ExaminationResponse;
+import com.example.drugmed.dto.examination.ExaminationUpdateRequest;
 import com.example.drugmed.service.ExaminationService;
 import jakarta.validation.Valid;
 import lombok.Getter;
@@ -36,4 +37,19 @@ public class ExaminationController {
         return examinationService.allExamination();
     }
 
+    @PatchMapping(
+            path = "/examination",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public WebResponse<Void> updateExaminationById(@RequestParam Long examination_id, @RequestBody ExaminationUpdateRequest request) {
+        return examinationService.examinationUpdate(examination_id, request);
+    }
+    @DeleteMapping(
+            path = "/examination",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public WebResponse<Void> deleteExaminationById(@RequestParam Long examination_id) {
+        return examinationService.deleteExamination(examination_id);
+    }
 }

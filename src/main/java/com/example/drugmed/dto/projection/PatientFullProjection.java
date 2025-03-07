@@ -16,6 +16,7 @@ public interface PatientFullProjection {
     Long getPrescriptionId();
     Long getPrescriptionPatientId();
     String getPrescriptionDoctorName();
+    LocalDateTime getPrescriptionDate();
     LocalDateTime getPrescriptionCreatedAt();
     LocalDateTime getPrescriptionUpdatedAt();
     String getClaim(); // p2.claim

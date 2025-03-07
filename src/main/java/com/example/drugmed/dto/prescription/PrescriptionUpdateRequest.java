@@ -1,6 +1,7 @@
 package com.example.drugmed.dto.prescription;
 
 
+import com.example.drugmed.dto.patient_referral_letter.PatientReferralLetterExaminationUpdateRequest;
 import com.example.drugmed.entity.Drug;
 import lombok.*;
 

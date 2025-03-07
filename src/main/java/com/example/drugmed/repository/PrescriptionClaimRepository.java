@@ -9,7 +9,7 @@ import java.util.Optional;
 
 @Repository
 public interface PrescriptionClaimRepository extends JpaRepository<PrescriptionClaim, Long> {
-
+    void deleteByPrescriptionId(Long prescriptionId);
     Long countByPrescriptionId(Long id);
     List<PrescriptionClaim> findByPrescriptionId(Long prescriptionId);
     Optional<PrescriptionClaim> findFirstByPrescriptionId(Long prescriptionId);

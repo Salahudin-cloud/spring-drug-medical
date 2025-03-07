@@ -9,7 +9,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface PatientRepository extends JpaRepository<Patient, Long> {
@@ -25,6 +24,7 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
             p2.id AS prescriptionId,
             p2.patient_id AS prescriptionPatientId,
             p2.doctor_name AS prescriptionDoctorName,
+            p2.prescription_date as prescriptionDate,
             p2.created_at AS prescriptionCreatedAt,
             p2.updated_at AS prescriptionUpdatedAt,
             p2.claim,
@@ -100,7 +100,7 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
             erd.detail_result as detailResult
             from patient_referral_letter prl
             left join list_examination le on prl.id = le.referral_letter_id
-            left join examination e on le.id  = e.id
+            left join examination e on le.examination_id  = e.id
             left join examination_result er on le.examination_result_id = er.id
             left join examination_result_detail erd on er.id = erd.examination_result_id
             where prl.patient_id = :patientId

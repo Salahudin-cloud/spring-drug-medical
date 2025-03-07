@@ -5,7 +5,9 @@ import com.example.drugmed.dto.examination.ExaminationResponse;
 import com.example.drugmed.dto.examination_result.ExaminationResultResponse;
 import com.example.drugmed.dto.examination_result_detail.ExaminationResultDetailResponse;
 import com.example.drugmed.dto.patient_referral_letter.PatientReferralLetterCreateRequest;
+import com.example.drugmed.dto.patient_referral_letter.PatientReferralLetterExaminationUpdateRequest;
 import com.example.drugmed.dto.patient_referral_letter.PatientReferralLetterResponse;
+import com.example.drugmed.dto.patient_referral_letter.PatientReferralLetterUpdateRequest;
 import com.example.drugmed.dto.projection.PatientReferralLetterProjection;
 import com.example.drugmed.entity.*;
 import com.example.drugmed.repository.ExaminationRepository;
@@ -223,4 +225,133 @@ public class PatientReferralLetterService {
                 .data(response)
                 .build();
     }
+
+
+   public  WebResponse<Void> deleteExamination(Long examinationId , Long referralId) {
+        if (!listExaminationRepository.existsByExaminationIdAndReferralId(examinationId, referralId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Data pemeriksaan tidak ditemukan");
+        }
+
+        Examination exam = examinationRepository.getReferenceById(examinationId);
+        PatientReferralLetter letter = patientReferralLetterRepository.getReferenceById(referralId);
+
+        listExaminationRepository.deleteByExaminationAndReferralLetter(exam, letter);
+        return WebResponse.<Void>builder()
+                .message("Pemeriksaan berhasil di hapus")
+                .status(HttpStatus.OK.value())
+                .build();
+    }
+
+    public WebResponse<Void> updateReferralIdLong(Long id, PatientReferralLetterUpdateRequest request) {
+        PatientReferralLetter letter = patientReferralLetterRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Surat pengantar dengan id " + id + " tidak ditemukan"));
+
+        if (request.getPatientId() != null) {
+            Patient patient = patientRepository.findById(request.getPatientId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Data pasien dengan id " + request.getPatientId() + " tidak ditemukan"));
+            letter.setPatient(patient);
+        }
+
+        if (request.getDoctorName() != null) {
+            letter.setDoctorName(request.getDoctorName());
+        }
+
+        if (request.getVerifierName() != null) {
+            letter.setVerifierName(request.getVerifierName());
+        }
+
+        if (request.getIsVerified() != null) {
+            letter.setIsVerified(request.getIsVerified());
+        }
+
+        if (request.getReferralDate() != null) {
+            letter.setReferralDate(request.getReferralDate());
+        }
+
+        if (request.getListExamination() != null && !request.getListExamination().isEmpty()) {
+            processToUpdateExamination(letter.getId(), request.getListExamination());
+        }
+
+
+        patientReferralLetterRepository.save(letter);
+
+        return WebResponse.<Void>builder()
+                .message("Berhasil memperbarui surat rujukan")
+                .status(HttpStatus.OK.value())
+                .build();
+    }
+
+    @Transactional
+    private void processToUpdateExamination(Long referralId, List<PatientReferralLetterExaminationUpdateRequest> listExamination) {
+        PatientReferralLetter letter = patientReferralLetterRepository.getReferenceById(referralId);
+
+        for (PatientReferralLetterExaminationUpdateRequest updates : listExamination) {
+            if (updates.getAction() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Silahkan isi aksi yang mau dilakukan");
+            }
+
+            switch (updates.getAction()) {
+                case ADD -> {
+                    Examination examination = examinationRepository.findById(updates.getNewExamination())
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pemeriksaan dengan id " + updates.getNewExamination() + " tidak ditemukan"));
+
+                    boolean alreadyExists = listExaminationRepository.existsByReferralLetterAndExamination(referralId, updates.getNewExamination());
+
+                    if (!alreadyExists) {
+                        ListExamination newListExamination = ListExamination.builder()
+                                .referralLetter(letter)
+                                .examination(examination)
+                                .build();
+                        listExaminationRepository.save(newListExamination);
+                    } else {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Pemeriksaan sudah ada dalam daftar");
+                    }
+                }
+                case REPLACE -> {
+                    List<ListExamination> listExaminations = listExaminationRepository.getAllListExamination(referralId);
+                    if (listExaminations.isEmpty()) {
+                        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Data list pemeriksaan tidak ditemukan");
+                    }
+                    ListExamination existingExamination = listExaminations.stream()
+                            .filter(le -> le.getExamination().getId().equals(updates.getOldExamination()))
+                            .findFirst()
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pemeriksaan lama dengan id " + updates.getOldExamination() + " tidak ditemukan"));
+
+                    Examination newExam = examinationRepository.findById(updates.getNewExamination())
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pemeriksaan baru dengan id " + updates.getNewExamination() + " tidak ditemukan"));
+
+                    existingExamination.setExamination(newExam);
+                    listExaminationRepository.save(existingExamination);
+                }
+                case REPLACE_ALL -> {
+                    if (updates.getExaminationIds() == null || updates.getExaminationIds().isEmpty()) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Daftar pemeriksaan baru tidak boleh kosong untuk REPLACE_ALL");
+                    }
+
+
+                    listExaminationRepository.deleteAllListExaminationByReferralId(referralId);
+
+
+                    List<ListExamination> newListExaminations = updates.getExaminationIds().stream()
+                            .map(examId -> {
+                                Examination examination = examinationRepository.findById(examId)
+                                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pemeriksaan dengan id " + examId + " tidak ditemukan"));
+
+                                return ListExamination.builder()
+                                        .referralLetter(letter)
+                                        .examination(examination)
+                                        .build();
+                            })
+                            .toList();
+
+                    listExaminationRepository.saveAll(newListExaminations);
+                }
+                default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Aksi untuk " + updates.getAction() + " tidak tersedia");
+            }
+        }
+    }
+
 }
+
+
+

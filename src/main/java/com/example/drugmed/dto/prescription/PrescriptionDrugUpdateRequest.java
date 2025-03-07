@@ -16,8 +16,6 @@ public class PrescriptionDrugUpdateRequest {
     private Long oldDrugId;
     private List<Long> drugIds;
     private ActionType action;
-
-
     public enum ActionType{
         ADD, REPLACE_ALL,DELETE,REPLACE
     }

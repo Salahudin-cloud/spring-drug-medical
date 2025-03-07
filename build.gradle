@@ -35,6 +35,13 @@ dependencies {
 
 	testImplementation 'com.h2database:h2:2.3.232'
 
+	// pdf
+	implementation 'com.itextpdf:itext7-core:9.0.0'
+	implementation 'com.itextpdf:layout:9.0.0'
+
+	// security
+	implementation 'org.springframework.boot:spring-boot-starter-security:3.4.3'
+
 
 
 

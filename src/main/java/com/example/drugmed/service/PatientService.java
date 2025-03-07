@@ -3,6 +3,7 @@ package com.example.drugmed.service;
 
 import com.example.drugmed.dto.WebResponse;
 import com.example.drugmed.dto.drug.DrugPatientResponse;
+import com.example.drugmed.dto.drug.DrugResponse;
 import com.example.drugmed.dto.drug_detail.DrugDetailResponse;
 import com.example.drugmed.dto.examination.ExaminationResponse;
 import com.example.drugmed.dto.examination_result.ExaminationResultResponse;
@@ -110,6 +111,10 @@ public class PatientService {
             Map<Long, List<PatientFullProjection>> referralMap = records.stream()
                     .filter(x -> x.getReferralId() != null)
                     .collect(Collectors.groupingBy(PatientFullProjection::getReferralId));
+            // group prescription
+            Map<Long, List<PatientFullProjection>> prescriptionMap = records.stream()
+                    .filter(x -> x.getPrescriptionId() != null )
+                    .collect(Collectors.groupingBy(PatientFullProjection::getPrescriptionId));
 
             List<PatientReferralLetterResponse> letters = referralMap.values().stream().map(referralRecords -> {
                 PatientFullProjection referralFirstRecord = referralRecords.getFirst();
@@ -140,7 +145,7 @@ public class PatientService {
                             return ExaminationResultDetailResponse.builder()
                                     .id(examResultDetailFirstRecord.getExaminationResultDetailId())
                                     .examinationResultId(examResultDetailFirstRecord.getExaminationResultId())
-                                    .detailResult(examResultDetailFirstRecord.getDetailResult()) // Sesuai Projection
+                                    .detailResult(examResultDetailFirstRecord.getDetailResult())
                                     .build();
                         }).toList();
 
@@ -177,6 +182,78 @@ public class PatientService {
                         .build();
             }).toList();
 
+            List<PrescriptionResponse> prescription = prescriptionMap.values().stream().map(prescriptionRecords -> {
+
+                PatientFullProjection firstPrecriptionRecord = prescriptionRecords.getFirst();
+
+                // map drug
+                Map<Long, List<PatientFullProjection>> drugMap = prescriptionRecords.stream()
+                        .filter(x -> x.getDrugId() != null)
+                        .collect(Collectors.groupingBy(PatientFullProjection::getDrugId));
+
+                // map claim history
+                Map<Long, List<PatientFullProjection>> claimMap = prescriptionRecords.stream()
+                        .filter(x -> x.getClaimId() != null)
+                        .collect(Collectors.groupingBy(PatientFullProjection::getClaimId));
+
+                List<DrugPatientResponse> drugResponses = drugMap.values().stream().map(
+                        drugRecord -> {
+                            PatientFullProjection drugFirstRecord = drugRecord.getFirst();
+
+                            Map<Long, List<PatientFullProjection>> drugDetailMap = drugRecord.stream().filter(x -> x.getDrugDetailId() != null)
+                                    .collect(Collectors.groupingBy(PatientFullProjection::getDrugDetailId));
+
+                            List<DrugDetailResponse> drugDetailResponses = drugDetailMap.values().stream().map(drugDetailRecord -> {
+                                PatientFullProjection drugDetailFirstRecord = drugDetailRecord.getFirst();
+
+                                return DrugDetailResponse.builder()
+                                        .id(drugDetailFirstRecord.getDrugDetailId())
+                                        .composition(drugDetailFirstRecord.getComposition())
+                                        .dosage(drugDetailFirstRecord.getDosage())
+                                        .desc(drugDetailFirstRecord.getDescDrug())
+                                        .createdAt(drugDetailFirstRecord.getDrugCreatedAt())
+                                        .updatedAt(drugDetailFirstRecord.getDrugUpdatedAt())
+                                        .build();
+                            }).toList();
+
+                            return DrugPatientResponse.builder()
+                                    .id(drugFirstRecord.getDrugId())
+                                    .drugName(drugFirstRecord.getDrugName())
+                                    .category(Drug.DrugCategory.valueOf(drugFirstRecord.getCategory()))
+                                    .createdAt(drugFirstRecord.getDrugCreatedAt())
+                                    .updatedAt(drugFirstRecord.getDrugUpdatedAt())
+                                    .drugDetail(drugDetailResponses.isEmpty() ? null : drugDetailResponses.getFirst())
+                                    .build();
+
+                        }).toList();
+
+                List<PrescriptionClaimResponse> claimResponses = claimMap.values().stream().map(
+                        claimRecord -> {
+
+                            PatientFullProjection claimHistoryFirstRecord = claimRecord.getFirst();
+
+                            return PrescriptionClaimResponse.builder()
+                                    .id(claimHistoryFirstRecord.getClaimId())
+                                    .prescriptionId(claimHistoryFirstRecord.getPrescriptionId())
+                                    .claimAt(claimHistoryFirstRecord.getClaimAt())
+                                    .build();
+
+                        }).toList();
+
+
+                return PrescriptionResponse.builder()
+                        .id(firstPrecriptionRecord.getPrescriptionId())
+                        .patientId(firstPrecriptionRecord.getPatientId())
+                        .doctorName(firstPrecriptionRecord.getPrescriptionDoctorName())
+                        .prescriptionDate(firstPrecriptionRecord.getPrescriptionDate())
+                        .createdAt(firstPrecriptionRecord.getPrescriptionCreatedAt())
+                        .updatedAt(firstPrecriptionRecord.getPrescriptionUpdatedAt())
+                        .drugs(drugResponses)
+                        .claimHistory(claimResponses)
+                        .build();
+
+            }).toList();
+
             return PatientResponse.builder()
                     .id(patientId)
                     .fullName(firstRecord.getFullName())
@@ -189,6 +266,7 @@ public class PatientService {
                     .createdAt(firstRecord.getPatientCreatedAt())
                     .updatedAt(firstRecord.getPatientUpdatedAt())
                     .referralLetters(letters)
+                    .prescriptions(prescription)
                     .build();
         }).toList();
 
@@ -220,6 +298,7 @@ public class PatientService {
                 .gender(patient.getGender())
                 .createdAt(patient.getCreatedAt())
                 .updatedAt(patient.getUpdatedAt())
+                .prescriptions(patient
                         .getPrescriptions()
                         .stream()
                         .map(this::mapToPrescriptionResponse)
@@ -324,6 +403,7 @@ public class PatientService {
 
         return PrescriptionResponse.builder()
                 .id(prescription.getId())
+                .patientId(prescription.getPatient().getId())
                 .doctorName(prescription.getDoctorName())
                 .prescriptionDate(prescription.getPrescriptionDate())
                 .createdAt(prescription.getCreatedAt())

@@ -33,6 +33,7 @@ public class PrescriptionController {
             path = "/prescription",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
+    public WebResponse<Void> delete(@RequestParam  Long precription_id) {
         return prescriptionService.deletePrescriptionById(precription_id);
     }
 

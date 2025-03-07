@@ -14,10 +14,12 @@ import com.example.drugmed.entity.Patient;
 import com.example.drugmed.entity.Prescription;
 import com.example.drugmed.repository.DrugRepository;
 import com.example.drugmed.repository.PatientRepository;
+import com.example.drugmed.repository.PrescriptionClaimRepository;
 import com.example.drugmed.repository.PrescriptionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
@@ -30,9 +32,11 @@ public class PrescriptionService {
     private final PrescriptionRepository prescriptionRepository;
     private final PatientRepository patientRepository;
     private final DrugRepository drugRepository;
+    private final PrescriptionClaimRepository prescriptionClaimRepository;
 
     public WebResponse<Void> createPrescription(PrescriptionCreateRequest request){
         Patient patient = patientRepository.findById(request.getPatientId()).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pasien tidak ditemukan"));
 
 
         List<Drug> drugs = drugRepository.findAllById(request.getDrugIds());
@@ -59,11 +63,14 @@ public class PrescriptionService {
     }
 
 
+    @Transactional
     public WebResponse<Void> deletePrescriptionById(Long id) {
-        Prescription prescription =  getPrescriptionById(id);
+        Prescription prescription = getPrescriptionById(id);
 
+        prescriptionClaimRepository.deleteByPrescriptionId(id);
         prescription.getDrugs().clear();
         prescriptionRepository.delete(prescription);
+
         return WebResponse.<Void>builder()
                 .message("Data resep berhasil dihapus")
                 .status(HttpStatus.OK.value())
@@ -71,10 +78,16 @@ public class PrescriptionService {
     }
 
 
+    public WebResponse<Void> UpdatePrescription(Long precriptionId, Long pasienId, PrescriptionUpdateRequest request) {
+        Prescription prescription = getPrescriptionById(precriptionId);
 
+        if (pasienId != null) {
+            Patient patient = patientRepository.findById(pasienId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pasien dengan id " + pasienId + " tidak ditemukan"));
             prescription.setPatient(patient);
         }
 
+        if (request.getDrug() != null && !request.getDrug().isEmpty()) {
+            processDrugUpdates(prescription, request.getDrug());
         }
         if (request.getDoctorName() != null) {
             prescription.setDoctorName(request.getDoctorName());
@@ -161,6 +174,9 @@ public class PrescriptionService {
                     break;
 
                 case DELETE:
+                    Drug drugToDelete = drugRepository.findById(drugUpdate.getDrugId())
+                            .orElseThrow(() -> new RuntimeException("Drug not found"));
+                    prescription.getDrugs().remove(drugToDelete);
                     break;
 
                 case REPLACE:
@@ -177,14 +193,35 @@ public class PrescriptionService {
                     }
 
                     prescription.getDrugs().remove(oldDrug);
+                    prescription.getDrugs().add(newDrug);
+                    break;
+
+                case REPLACE_ALL:
+                    if (drugUpdate.getDrugIds() == null || drugUpdate.getDrugIds().isEmpty()) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Silahkan masukkan daftar obat baru");
+                    }
+                    replaceAllDrugs.addAll(drugUpdate.getDrugIds());
                     break;
 
                 default:
-        }
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Aksi untuk  " + drugUpdate.getAction() + " tidak tersedia");
             }
         }
 
+
+        if (!replaceAllDrugs.isEmpty()) {
+            prescription.getDrugs().clear();
+            for (Long drugId : replaceAllDrugs) {
+                Drug drug = drugRepository.findById(drugId)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"Obat dengan id " + drugId + " tidak ditemukan"));
+                prescription.getDrugs().add(drug);
+            }
+        }
+    }
+
+
     private Prescription getPrescriptionById(Long id) {
+        return prescriptionRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Resep dengan id  " + id + " tidak ditemukan"));
     }
 
 }
